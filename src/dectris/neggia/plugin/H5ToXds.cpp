@@ -164,13 +164,7 @@ void setPixelMask(H5DataCache* dataCache) {
        dataCache->pixelMask.reset(new uint32_t[s]);
        pixelMask.read(dataCache->pixelMask.get());
     } catch (const std::out_of_range &) {
-       //throw H5Error(-4, "NEGGIA ERROR: CANNOT READ PIXEL MASK FROM ", dataCache->filename);
-       // horrible hack to work around missing mask data set
-       dataCache->dimx = 4148;
-       dataCache->dimy = 4362;
-       size_t s = (size_t )(dataCache->dimx * dataCache->dimy);
-       dataCache->pixelMask.reset(new uint32_t[s]());
-       std::cerr << "Ignoring mask error" << std::endl;
+       throw H5Error(-4, "NEGGIA ERROR: CANNOT READ PIXEL MASK FROM ", dataCache->filename);
     }
 }
 
@@ -190,9 +184,7 @@ size_t getNumberOfTriggers(const H5DataCache * dataCache) {
        Dataset d(dataCache->h5File, "/entry/instrument/detector/detectorSpecific/ntrigger");
        return readSizeTypeFromDataset(d);
     } catch (const std::out_of_range&) {
-       //throw H5Error(-4, "NEGGIA ERROR: CANNOT READ N_TRIGGER FROM ", dataCache->filename);
-       // DEBUG
-       return 1;
+       throw H5Error(-4, "NEGGIA ERROR: CANNOT READ N_TRIGGER FROM ", dataCache->filename);
     } catch (const H5Error &) {
         throw H5Error(-4, "NEGGIA ERROR: UNSUPPORTED DATATYPE FOR N_TRIGGER");
     }
@@ -220,13 +212,13 @@ void applyMaskAndTransformToInt32(const H5DataCache* dataCache, const void * ind
 {
     switch(dataCache->datasize) {
     case 1:
-        applyMaskAndTransformToInt32((const int8_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
+        applyMaskAndTransformToInt32((const uint8_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
         break;
     case 2:
-        applyMaskAndTransformToInt32((const int16_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
+        applyMaskAndTransformToInt32((const uint16_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
         break;
     case 4:
-        applyMaskAndTransformToInt32((const int32_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
+        applyMaskAndTransformToInt32((const uint32_t*)indata, outdata, dataCache->pixelMask.get(), dataCache->dimx*dataCache->dimy);
         break;
     default: {
         throw H5Error(-3, "NEGGIA ERROR: DATATYPE NOT SUPPORTED");
